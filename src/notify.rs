@@ -1,65 +1,13 @@
-use std::env;
-use std::fs;
-use std::path::PathBuf;
 use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
 
 use crate::error::StealthError;
 
-const DUNST_CONF: &str = "\
-[stealth]
-    appname = \"Stealth\"
-    background = \"#00000000\"
-    foreground = \"#e3e8f2\"
-    frame_color = \"#00000000\"
-    format = \"%b\"
-";
-
 pub fn escape_pango(text: &str) -> String {
     text.replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")
-}
-
-fn write_dunst_config() -> Option<PathBuf> {
-    let path = env::temp_dir().join("stealth-dunst.conf");
-    fs::write(&path, DUNST_CONF).ok()?;
-    fs::canonicalize(path).ok()
-}
-
-fn ensure_dunst_config() {
-    let Some(conf_path) = write_dunst_config() else {
-        return;
-    };
-    if let Ok(output) = Command::new("dunstctl").args(["rules", "--json"]).output() {
-        if output.status.success() {
-            let out_str = String::from_utf8_lossy(&output.stdout);
-            if out_str.contains("\"appname\" : \"Stealth\"")
-                || out_str.contains("\"name\" : \"stealth\"")
-            {
-                return;
-            }
-        }
-    }
-
-    let home = env::var("HOME").unwrap_or_else(|_| ".".into());
-    let sys_dunstrc = PathBuf::from(&home).join(".config/dunst/dunstrc");
-    let mut args = vec!["reload".to_string()];
-    if sys_dunstrc.is_file() {
-        args.push(sys_dunstrc.to_string_lossy().to_string());
-    }
-    let dropin_dir = PathBuf::from(&home).join(".config/dunst/dunstrc.d");
-    if let Ok(entries) = fs::read_dir(dropin_dir) {
-        for entry in entries.flatten() {
-            let p = entry.path();
-            if p.extension().is_some_and(|ext| ext == "conf") {
-                args.push(p.to_string_lossy().to_string());
-            }
-        }
-    }
-    args.push(conf_path.to_string_lossy().to_string());
-    let _ = Command::new("dunstctl").args(&args).output();
 }
 
 pub fn notify(text: &str) -> Result<(), StealthError> {
@@ -69,8 +17,6 @@ pub fn notify(text: &str) -> Result<(), StealthError> {
             "Cannot send an empty notification.".into(),
         ));
     }
-
-    ensure_dunst_config();
 
     let body = format!("<span size='8pt'>{}</span>", escape_pango(trimmed));
     let status = Command::new("notify-send")
