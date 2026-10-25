@@ -1,9 +1,0 @@
-# Ignore generated analysis/report output
-graphify-out/** linguist-generated
-graphify-out/**/*.html linguist-generated
-
-# Also ignore generated artifacts
-artifacts/** linguist-generated
-
-# Exclude HTML files from language detection if they're templates or generated
-*.html linguist-vendored
