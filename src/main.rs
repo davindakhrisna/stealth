@@ -1,15 +1,15 @@
 use clap::Parser;
 use std::process::ExitCode;
 
-use academic::capture::capture_png;
-use academic::config::{load_config, set_model};
-use academic::error::AcademicError;
-use academic::notify::{clear, notify, report_error, simulate};
-use academic::router::RouterClient;
+use stealth::capture::capture_png;
+use stealth::config::{load_config, set_effort, set_model};
+use stealth::engine::EngineClient;
+use stealth::error::StealthError;
+use stealth::notify::{clear, notify, report_error, simulate};
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "academic",
+    name = "stealth",
     about = "Screenshot answer helper for Linux Hyprland"
 )]
 struct Args {
@@ -22,15 +22,18 @@ struct Args {
     #[arg(long, value_name = "TEXT", help = "Send a notification")]
     notify: Option<String>,
 
+    #[arg(long, value_name = "MODEL", help = "Update AGY_MODEL in .env")]
+    set_model: Option<String>,
+
     #[arg(
         long,
-        value_name = "MODEL",
-        help = "Update ROUTER_MODEL (9Router combo) in .env"
+        value_name = "EFFORT",
+        help = "Update AGY_EFFORT (low|medium|high|xhigh|max) in .env"
     )]
-    set_model: Option<String>,
+    set_effort: Option<String>,
 }
 
-fn run(args: Args) -> Result<(), AcademicError> {
+fn run(args: Args) -> Result<(), StealthError> {
     if args.clear {
         clear()?;
     } else if args.simulate {
@@ -39,10 +42,13 @@ fn run(args: Args) -> Result<(), AcademicError> {
         notify(text)?;
     } else if let Some(ref model) = args.set_model {
         let path = set_model(model, None)?;
-        println!("ROUTER_MODEL={model} saved to {}", path.display());
+        println!("AGY_MODEL={model} saved to {}", path.display());
+    } else if let Some(ref effort) = args.set_effort {
+        let path = set_effort(effort, None)?;
+        println!("AGY_EFFORT={effort} saved to {}", path.display());
     } else {
         let config = load_config()?;
-        let client = RouterClient::new(config);
+        let client = EngineClient::new(config);
         let image = capture_png()?;
         let answer = client.generate(&image)?;
         notify(&answer)?;

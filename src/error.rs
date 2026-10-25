@@ -1,5 +1,5 @@
 #[derive(Debug, thiserror::Error)]
-pub enum AcademicError {
+pub enum StealthError {
     #[error("{0}")]
     Config(String),
 
@@ -18,6 +18,8 @@ pub enum AcademicError {
     #[error("{0}")]
     Io(#[from] std::io::Error),
 }
+
+pub type AcademicError = StealthError;
 
 fn format_api_error(message: &str, status: Option<u16>) -> String {
     match status {

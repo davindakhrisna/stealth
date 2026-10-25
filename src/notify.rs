@@ -5,11 +5,11 @@ use std::process::Command;
 use std::thread::sleep;
 use std::time::Duration;
 
-use crate::error::AcademicError;
+use crate::error::StealthError;
 
 const DUNST_CONF: &str = "\
-[academia]
-    appname = \"Academia\"
+[stealth]
+    appname = \"Stealth\"
     background = \"#00000000\"
     foreground = \"#e3e8f2\"
     frame_color = \"#00000000\"
@@ -23,7 +23,7 @@ pub fn escape_pango(text: &str) -> String {
 }
 
 fn write_dunst_config() -> Option<PathBuf> {
-    let path = env::temp_dir().join("academia-dunst.conf");
+    let path = env::temp_dir().join("stealth-dunst.conf");
     fs::write(&path, DUNST_CONF).ok()?;
     fs::canonicalize(path).ok()
 }
@@ -35,8 +35,8 @@ fn ensure_dunst_config() {
     if let Ok(output) = Command::new("dunstctl").args(["rules", "--json"]).output() {
         if output.status.success() {
             let out_str = String::from_utf8_lossy(&output.stdout);
-            if out_str.contains("\"appname\" : \"Academia\"")
-                || out_str.contains("\"name\" : \"academia\"")
+            if out_str.contains("\"appname\" : \"Stealth\"")
+                || out_str.contains("\"name\" : \"stealth\"")
             {
                 return;
             }
@@ -62,10 +62,10 @@ fn ensure_dunst_config() {
     let _ = Command::new("dunstctl").args(&args).output();
 }
 
-pub fn notify(text: &str) -> Result<(), AcademicError> {
+pub fn notify(text: &str) -> Result<(), StealthError> {
     let trimmed = text.trim();
     if trimmed.is_empty() {
-        return Err(AcademicError::Notification(
+        return Err(StealthError::Notification(
             "Cannot send an empty notification.".into(),
         ));
     }
@@ -76,7 +76,7 @@ pub fn notify(text: &str) -> Result<(), AcademicError> {
     let status = Command::new("notify-send")
         .args([
             "-a",
-            "Academia",
+            "Stealth",
             "-u",
             "low",
             "-t",
@@ -92,10 +92,10 @@ pub fn notify(text: &str) -> Result<(), AcademicError> {
             &body,
         ])
         .status()
-        .map_err(|e| AcademicError::Notification(format!("Failed to execute notify-send: {e}")))?;
+        .map_err(|e| StealthError::Notification(format!("Failed to execute notify-send: {e}")))?;
 
     if !status.success() {
-        return Err(AcademicError::Notification(format!(
+        return Err(StealthError::Notification(format!(
             "notify-send failed (exit code {:?})",
             status.code()
         )));
@@ -103,14 +103,14 @@ pub fn notify(text: &str) -> Result<(), AcademicError> {
     Ok(())
 }
 
-pub fn clear() -> Result<(), AcademicError> {
+pub fn clear() -> Result<(), StealthError> {
     let status = Command::new("dunstctl")
         .arg("close-all")
         .status()
-        .map_err(|e| AcademicError::Notification(format!("Failed to execute dunstctl: {e}")))?;
+        .map_err(|e| StealthError::Notification(format!("Failed to execute dunstctl: {e}")))?;
 
     if !status.success() {
-        return Err(AcademicError::Notification(format!(
+        return Err(StealthError::Notification(format!(
             "dunstctl failed (exit code {:?})",
             status.code()
         )));
@@ -119,7 +119,7 @@ pub fn clear() -> Result<(), AcademicError> {
     Ok(())
 }
 
-pub fn simulate() -> Result<(), AcademicError> {
+pub fn simulate() -> Result<(), StealthError> {
     let samples = [
         "∫ x² dx = x³/3 + C",
         "0 < x < 5",

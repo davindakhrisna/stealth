@@ -1,35 +1,38 @@
-# Academia
+# Stealth
 
 Screenshot answers for **Linux Hyprland**.
-Built in Rust. Requests use a local 9Router gateway.
+Built in Rust. Powered by Antigravity CLI headless (`agy`) as the primary engine with Google Gemini API key fallback.
 
 ## Start
 
 1. Install `grim` and `notify-send`; run inside a Wayland/Hyprland session.
-2. Start 9Router and create a combo named `Academic` containing models that support
-   image input. Configure their connections and fallback order in 9Router.
-3. Copy `.env.example` to `.env`. Set `ROUTER_API_KEY` to a **9Router gateway key**
-   if gateway authentication is enabled; otherwise leave it empty.
+2. Ensure `agy` (Antigravity CLI) is installed and authenticated.
+3. (Optional) Provide a `GEMINI_API_KEY` in `.env` to serve as a high-speed fallback if `agy` fails or is unreachable.
+4. Copy `.env.example` to `.env` and adjust the model and reasoning effort:
 
 ```dotenv
-ROUTER_BASE_URL=http://127.0.0.1:20128/v1
-ROUTER_MODEL=Academic
-ROUTER_API_KEY=
+# Antigravity CLI Headless (Main Engine)
+AGY_MODEL=gemini-3.8-flash-low
+AGY_EFFORT=low
+
+# Google Gemini API Key (Fallback Engine)
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.5-flash
+# GEMINI_BASE_URL=https://generativelanguage.googleapis.com
 ```
 
-The app sends `model: "Academic"`; 9Router selects models and handles fallbacks.
-Provider keys belong in 9Router, not this app. To change the combo, use
-`academic --set-model COMBO`. Upstream provider quotas and costs still apply.
+### CLI Usage
 
 ```sh
-academic                    # Screenshot answer as a notification
-academic --clear            # Clear dunst notifications (-c)
-academic --simulate         # Preview sample notifications (-s)
-academic --notify "hello"   # Send a custom notification
-academic --set-model COMBO  # Update ROUTER_MODEL in .env
+stealth                    # Capture screen, solve via agy (or Gemini fallback), and notify
+stealth --clear            # Clear dunst notifications (-c)
+stealth --simulate         # Preview sample notifications (-s)
+stealth --notify "hello"   # Send a custom notification
+stealth --set-model MODEL  # Update AGY_MODEL in .env
+stealth --set-effort EFFORT# Update AGY_EFFORT (low|medium|high|xhigh|max) in .env
 ```
 
-Keep `.env` beside the executable, or set `ACADEMIC_ENV_FILE` to its path.
+Keep `.env` beside the executable, or set `STEALTH_ENV_FILE` to its path.
 
 ## Develop
 
@@ -37,5 +40,5 @@ Keep `.env` beside the executable, or set `ACADEMIC_ENV_FILE` to its path.
 cargo test                  # Run unit and integration tests
 cargo fmt --check           # Check code formatting
 cargo clippy -- -D warnings # Lint with Clippy
-cargo build --release       # Build optimized binary in target/release/academic
+cargo build --release       # Build optimized binary in target/release/stealth
 ```
